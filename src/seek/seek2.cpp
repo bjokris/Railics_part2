@@ -1,6 +1,8 @@
 
 #include <arduinoFFT.h>
 #include "seek2.h"
+#include <iostream>
+using namespace std;
 
 // Detection parameters
 const float lowRange = 3000.0f;
@@ -8,7 +10,7 @@ const float highRange = 10000.0f;
 const float peakThresholdStd = 2.0f;
 
 struct seek2_result {
-    float brakeSoundMagnitude;
+    float brakeSoundMagnitude;float peak;
 };
 
 CONFIG_LOG_TAG(SEEK2)
@@ -44,7 +46,7 @@ void seek2_do_calc(seek_data_t *seek_data, uint8_t *array, uint32_t size)
     
     seek2_result result = brake_sound_detector((int16_t *)array, samples_size,
                             vReal, samples_size, vImag, samples_size);
-    seek_data->crestFacter = result.brakeSoundMagnitude;
+    seek_data->magnitude = result.brakeSoundMagnitude;
 
     free(vReal);
     free(vImag);
@@ -153,6 +155,9 @@ static seek2_result brake_sound_detector(int16_t *samples, uint32_t samples_size
     int lowIndex = static_cast<int>(lowRange * samples_size / CONFIG_MIC_SAMPLE_RATE);
     int highIndex = static_cast<int>(highRange * samples_size / CONFIG_MIC_SAMPLE_RATE);
     int count = highIndex - lowIndex + 1;
+    
+    cout << "\n Utskrift lowIndex  " << lowIndex;
+    cout << "\n utskrift highIndex  " << highIndex;
 
     // Calculate the sum of magnitudes for the frequency range
     float sumMagnitudes = 0.0f;
@@ -178,7 +183,23 @@ static seek2_result brake_sound_detector(int16_t *samples, uint32_t samples_size
             sumPeakMagnitudes += vReal[i];
         }
     }
+  // Compute the crest factor of normalized samples
+    //float seek1_computeCrestFactor(float *samples, uint32_t samples_size);
 
+     
+    float peak = 0.0f;
+    float sumSq = 0.0f;
+
+    for (size_t i = 0; i < samples_size; i++) {
+        float absSample = std::fabs(samples[i]);
+        peak = std::max(peak, absSample);
+        sumSq += samples[i] * samples[i];
+    }
+    
+    result.peak = peak/ std::sqrt(sumSq / samples_size);
+    
     result.brakeSoundMagnitude = sumPeakMagnitudes / (highRange - lowRange); // consider dividing by sumMagnitudes;
+    cout << "\n Utskrift resul.brakesoundMagnitude" << result.brakeSoundMagnitude;
+    
     return result;
 }
