@@ -197,9 +197,11 @@ static seek2_result brake_sound_detector(int16_t *samples, uint32_t samples_size
     }
     
     result.peak = peak/ std::sqrt(sumSq / samples_size);
-    
+    cout << "\n Utskrift result.peak  " << result.peak;
+
     result.brakeSoundMagnitude = sumPeakMagnitudes / (highRange - lowRange); // consider dividing by sumMagnitudes;
-    cout << "\n Utskrift resul.brakesoundMagnitude" << result.brakeSoundMagnitude;
+    
+    cout << "\n Utskrift result.brakesoundMagnitude" << result.brakeSoundMagnitude;
     
     return result;
 }
